@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>WordCount — Text Analyzer</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+/* ── Theme tokens ── */
+[data-theme="light"]{
+  --bg:        #f5f3ee;
+  --bg-alt:    #ede9e0;
+  --surface:   #faf8f4;
+  --border:    #d6d2c8;
+  --ink:       #1a1a18;
+  --ink-2:     #4a4a44;
+  --ink-3:     #6b6b64;
+  --ink-4:     #b0afa8;
+  --accent:    #c8601a;
+  --acc-lt:    #f5e4d0;
+  --acc-dk:    #7a3a0e;
+  --green:     #2d6a4f;
+  --green-lt:  #d8f3dc;
+  --blue:      #1d4e89;
+  --blue-lt:   #dbeafe;
+  --purple:    #5b2d8e;
+  --purple-lt: #ede9fe;
+  --amber:     #92400e;
+  --amber-lt:  #fef3c7;
+  --red:       #991b1b;
+  --red-lt:    #fee2e2;
+  --header-bg: #1a1a18;
+  --header-fg: #faf8f4;
+}
+
+[data-theme="dark"]{
+  --bg:        #141413;
+  --bg-alt:    #1e1e1c;
+  --surface:   #242422;
+  --border:    #38382e;
+  --ink:       #f0ede8;
+  --ink-2:     #d0cdc8;
+  --ink-3:     #9a9990;
+  --ink-4:     #5a5950;
+  --accent:    #e07840;
+  --acc-lt:    #3a2010;
+  --acc-dk:    #f0a070;
+  --green:     #4ade80;
+  --green-lt:  #0f2d1c;
+  --blue:      #60a5fa;
+  --blue-lt:   #0e1f3a;
+  --purple:    #a78bfa;
+  --purple-lt: #1e1030;
+  --amber:     #fbbf24;
+  --amber-lt:  #2a1f00;
+  --red:       #f87171;
+  --red-lt:    #2d0f0f;
+  --header-bg: #0e0e0d;
+  --header-fg: #f0ede8;
+}
+
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  transition:background .25s,color .25s;
+}
+
+/* ── Header ── */
+header{
+  background:var(--header-bg);
+  color:var(--header-fg);
+  padding:1.1rem 2rem;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-bottom:3px solid var(--accent);
+  position:sticky;top:0;z-index:100;
+}
+.logo{display:flex;align-items:center;gap:.5rem}
+.logo-title{
+  font-family:'Playfair Display',serif;
+  font-size:1.5rem;font-weight:700;
+  letter-spacing:-.02em;color:var(--header-fg);
+}
+.logo-dot{width:7px;height:7px;background:var(--accent);border-radius:50%}
+.header-right{display:flex;align-items:center;gap:.75rem}
+.header-badge{
+  font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-4);background:transparent;
+  border:1px solid #ffffff22;border-radius:4px;
+  padding:.25rem .6rem;
+}
+
+/* ── Dark mode toggle ── */
+.dark-toggle{
+  width:42px;height:24px;border-radius:99px;
+  background:var(--border);border:none;cursor:pointer;
+  position:relative;transition:background .2s;flex-shrink:0;
+  outline:none;
+}
+.dark-toggle.on{background:var(--accent)}
+.dark-toggle::after{
+  content:'';
+  position:absolute;top:3px;left:3px;
+  width:18px;height:18px;border-radius:50%;
+  background:#fff;
+  transition:transform .2s;
+}
+.dark-toggle.on::after{transform:translateX(18px)}
+
+/* ── Layout ── */
+main{
+  flex:1;display:grid;
+  grid-template-columns:1fr 330px;
+  gap:1.75rem;
+  max-width:1220px;width:100%;
+  margin:0 auto;padding:1.75rem;
+}
+
+/* ── Upload zone ── */
+.upload-zone{
+  border:2px dashed var(--border);
+  border-radius:10px;
+  padding:1rem 1.25rem;
+  display:flex;align-items:center;gap:1rem;
+  cursor:pointer;
+  transition:border-color .2s,background .2s;
+  background:var(--surface);
+  margin-bottom:1rem;
+}
+.upload-zone:hover,.upload-zone.drag{
+  border-color:var(--accent);background:var(--acc-lt);
+}
+.upload-icon{
+  width:36px;height:36px;border-radius:8px;
+  background:var(--acc-lt);display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;font-size:1rem;
+  color:var(--accent);
+}
+.upload-text{flex:1}
+.upload-text strong{display:block;font-size:.85rem;font-weight:500;color:var(--ink)}
+.upload-text span{font-size:.75rem;color:var(--ink-3)}
+.upload-filename{
+  font-family:'DM Mono',monospace;font-size:.72rem;
+  color:var(--accent);margin-top:.2rem;display:none;
+}
+#file-input{display:none}
+
+/* ── Editor ── */
+.editor-label{
+  font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:500;margin-bottom:.5rem;display:block;
+}
+.textarea-wrapper{position:relative}
+textarea{
+  width:100%;height:420px;
+  padding:1.1rem 1.1rem 3rem;
+  font-family:'DM Mono',monospace;font-size:.875rem;line-height:1.8;
+  color:var(--ink);background:var(--surface);
+  border:1.5px solid var(--border);border-radius:10px;
+  resize:vertical;outline:none;
+  transition:border-color .2s,background .25s;
+  tab-size:2;
+}
+textarea::placeholder{color:var(--ink-4);font-style:italic}
+textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--acc-lt)}
+.char-ticker{
+  position:absolute;bottom:12px;right:14px;
+  font-family:'DM Mono',monospace;font-size:.7rem;
+  color:var(--ink-4);pointer-events:none;
+}
+
+/* ── Toolbar ── */
+.toolbar{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.75rem}
+.btn{
+  font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:500;
+  padding:.5rem 1rem;border-radius:5px;cursor:pointer;
+  transition:all .15s;border:1.5px solid transparent;
+}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{background:var(--acc-dk);border-color:var(--acc-dk)}
+.btn-ghost{background:transparent;color:var(--ink-3);border-color:var(--border)}
+.btn-ghost:hover{border-color:var(--ink-3);color:var(--ink);background:var(--bg-alt)}
+.btn-danger{background:transparent;color:var(--red);border-color:#fca5a5}
+.btn-danger:hover{background:var(--red-lt)}
+
+/* ── Stats panel ── */
+.stats-panel{display:flex;flex-direction:column;gap:.85rem}
+.panel-heading{
+  font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:500;padding-bottom:.4rem;
+  border-bottom:1px solid var(--border);
+}
+
+/* stat cards */
+.stat-card{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:10px;padding:.9rem 1rem;
+  display:flex;align-items:center;gap:.9rem;
+  transition:border-color .2s,transform .15s;
+  position:relative;overflow:hidden;
+}
+.stat-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;
+  width:4px;border-radius:2px 0 0 2px;
+}
+.stat-card.words::before  {background:var(--accent)}
+.stat-card.chars::before  {background:var(--blue)}
+.stat-card.sentences::before{background:var(--green)}
+.stat-card.spaces::before {background:var(--purple)}
+.stat-card.lines::before  {background:var(--amber)}
+.stat-card:hover{border-color:var(--ink-4);transform:translateX(2px)}
+
+.stat-icon{
+  width:36px;height:36px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;font-size:.9rem;font-weight:500;
+  font-family:'DM Mono',monospace;
+}
+.words .stat-icon  {background:var(--acc-lt);color:var(--accent)}
+.chars .stat-icon  {background:var(--blue-lt);color:var(--blue)}
+.sentences .stat-icon{background:var(--green-lt);color:var(--green)}
+.spaces .stat-icon {background:var(--purple-lt);color:var(--purple)}
+.lines .stat-icon  {background:var(--amber-lt);color:var(--amber)}
+
+.stat-label{font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.stat-value{
+  font-family:'Playfair Display',serif;font-size:1.6rem;
+  font-weight:700;line-height:1.1;color:var(--ink);
+  transition:color .2s;
+}
+.stat-value.pop{animation:pop .28s ease}
+@keyframes pop{0%{transform:scale(1.15);opacity:.6}100%{transform:scale(1);opacity:1}}
+
+/* reading time */
+.reading-time{
+  background:var(--bg-alt);border:1px solid var(--border);
+  border-radius:99px;padding:.35rem .9rem;
+  font-size:.78rem;color:var(--ink-3);text-align:center;
+  font-family:'DM Mono',monospace;letter-spacing:.02em;
+}
+.reading-time span{color:var(--ink);font-weight:500}
+
+/* readability gauge */
+.gauge-card{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:10px;padding:.9rem 1rem;
+}
+.gauge-header{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:.6rem;
+}
+.gauge-title{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.gauge-grade{font-size:.78rem;font-weight:500;color:var(--accent)}
+.gauge-track{height:8px;background:var(--bg-alt);border-radius:99px;overflow:hidden}
+.gauge-fill{
+  height:100%;border-radius:99px;
+  background:linear-gradient(90deg,var(--red) 0%,var(--amber) 40%,var(--green) 100%);
+  transition:width .5s cubic-bezier(.34,1.56,.64,1);
+  width:0%;
+}
+.gauge-score{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--ink-4);margin-top:.35rem;text-align:right}
+
+/* density bars */
+.density-card{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:10px;padding:.9rem 1rem;
+}
+.density-title{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:500;margin-bottom:.7rem}
+.bar-row{display:flex;align-items:center;gap:.6rem;margin-bottom:.35rem;font-size:.76rem}
+.bar-lbl{width:55px;color:var(--ink-3)}
+.bar-track{flex:1;height:5px;background:var(--bg-alt);border-radius:99px;overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;transition:width .4s cubic-bezier(.34,1.56,.64,1);width:0%}
+.bar-fill.letters{background:var(--accent)}
+.bar-fill.digits {background:var(--blue)}
+.bar-fill.spaces {background:var(--purple)}
+.bar-pct{width:32px;text-align:right;font-family:'DM Mono',monospace;font-size:.7rem;color:var(--ink-4)}
+
+/* top words */
+.top-card{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:.9rem 1rem}
+.top-title{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:500;margin-bottom:.6rem}
+.pill-list{display:flex;flex-wrap:wrap;gap:.35rem}
+.pill{
+  font-family:'DM Mono',monospace;font-size:.7rem;
+  background:var(--bg-alt);border:1px solid var(--border);
+  border-radius:4px;padding:.18rem .45rem;
+  color:var(--ink-3);display:flex;align-items:center;gap:.3rem;
+}
+.pill-n{font-weight:500;color:var(--accent)}
+.empty{font-size:.78rem;color:var(--ink-4);font-style:italic;text-align:center;padding:.3rem 0}
+
+/* ── DUPLICATE PANEL ── */
+.dup-card{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:10px;padding:.9rem 1rem;
+  grid-column:1/-1;margin-top:.25rem;
+}
+.dup-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
+.dup-title{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.dup-badge{
+  font-size:.7rem;font-weight:500;padding:.15rem .55rem;border-radius:99px;
+}
+.dup-badge.none{background:var(--green-lt);color:var(--green)}
+.dup-badge.has {background:var(--red-lt);color:var(--red)}
+
+.dup-list{display:flex;flex-direction:column;gap:.5rem}
+.dup-item{
+  background:var(--red-lt);border:1px solid #fca5a566;
+  border-left:3px solid var(--red);border-radius:6px;
+  padding:.6rem .85rem;font-size:.82rem;line-height:1.55;
+  color:var(--red);font-family:'DM Mono',monospace;
+}
+
+/* ── EXPORT MODAL ── */
+.modal-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.55);z-index:200;
+  align-items:center;justify-content:center;
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:14px;padding:1.5rem;width:520px;max-width:94vw;
+  position:relative;
+}
+.modal h2{
+  font-family:'Playfair Display',serif;font-size:1.2rem;
+  font-weight:700;margin-bottom:.2rem;color:var(--ink);
+}
+.modal p{font-size:.8rem;color:var(--ink-3);margin-bottom:1rem}
+.modal-close{
+  position:absolute;top:.9rem;right:1rem;background:none;border:none;
+  font-size:1.1rem;cursor:pointer;color:var(--ink-3);
+}
+.modal-close:hover{color:var(--ink)}
+.export-pre{
+  background:var(--bg-alt);border:1px solid var(--border);border-radius:8px;
+  padding:.85rem 1rem;font-family:'DM Mono',monospace;font-size:.72rem;
+  line-height:1.7;color:var(--ink-2);max-height:260px;overflow-y:auto;
+  white-space:pre;margin-bottom:1rem;
+}
+.modal-actions{display:flex;gap:.6rem;justify-content:flex-end}
+
+/* ── Footer ── */
+footer{
+  text-align:center;padding:.85rem;font-size:.72rem;color:var(--ink-4);
+  border-top:1px solid var(--border);background:var(--bg-alt);
+  letter-spacing:.04em;transition:background .25s;
+}
+footer a{color:var(--ink-4);text-decoration:none}
+footer a:hover{color:var(--accent)}
+
+/* ── Responsive ── */
+@media(max-width:820px){
+  main{grid-template-columns:1fr;padding:1rem;gap:1.1rem}
+  header{padding:.9rem 1rem}
+  textarea{height:260px}
+  .dup-card{grid-column:1}
+}
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header>
+  <div class="logo">
+    <span class="logo-title">WordCount</span>
+    <div class="logo-dot"></div>
+  </div>
+  <div class="header-right">
+    <span class="header-badge">Text Analyzer</span>
+    <button class="dark-toggle" id="dark-toggle" title="Toggle dark mode" aria-label="Toggle dark mode"></button>
+  </div>
+</header>
+
+<!-- ── Main ── -->
+<main>
+  <!-- LEFT: editor -->
+  <div style="display:flex;flex-direction:column;gap:.1rem">
+
+    <!-- Upload zone -->
+    <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+      <div class="upload-icon">&#8679;</div>
+      <div class="upload-text">
+        <strong>Upload a file</strong>
+        <span>Drag &amp; drop or click — supports .txt, .md, .csv</span>
+        <div class="upload-filename" id="upload-filename"></div>
+      </div>
+    </div>
+    <input type="file" id="file-input" accept=".txt,.md,.csv,.log,.html,.js,.cpp,.py"/>
+
+    <label class="editor-label" for="editor">Your text</label>
+    <div class="textarea-wrapper">
+      <textarea id="editor"
+        placeholder="Start typing or paste your text here…&#10;&#10;All statistics update in real time."
+        spellcheck="true" autofocus></textarea>
+      <span class="char-ticker" id="char-ticker">0 chars</span>
+    </div>
+
+    <div class="toolbar">
+      <button class="btn btn-ghost" onclick="loadSample()">Load sample</button>
+      <button class="btn btn-ghost" onclick="openExport()">Export report</button>
+      <button class="btn btn-danger" onclick="clearAll()">Clear</button>
+    </div>
+
+    <!-- Duplicate detector (full width under editor) -->
+    <div class="dup-card" style="margin-top:1rem">
+      <div class="dup-header">
+        <span class="dup-title">Duplicate sentence detector</span>
+        <span class="dup-badge none" id="dup-badge">No duplicates</span>
+      </div>
+      <div class="dup-list" id="dup-list">
+        <div class="empty">No duplicate sentences found</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: stats -->
+  <div class="stats-panel">
+    <div class="panel-heading">Analysis</div>
+
+    <div class="stat-card words">
+      <div class="stat-icon">W</div>
+      <div>
+        <div class="stat-label">Words</div>
+        <div class="stat-value" id="s-words">0</div>
+      </div>
+    </div>
+
+    <div class="stat-card chars">
+      <div class="stat-icon">C</div>
+      <div>
+        <div class="stat-label">Characters</div>
+        <div class="stat-value" id="s-chars">0</div>
+      </div>
+    </div>
+
+    <div class="stat-card sentences">
+      <div class="stat-icon">S</div>
+      <div>
+        <div class="stat-label">Sentences</div>
+        <div class="stat-value" id="s-sentences">0</div>
+      </div>
+    </div>
+
+    <div class="stat-card spaces">
+      <div class="stat-icon">_</div>
+      <div>
+        <div class="stat-label">Spaces</div>
+        <div class="stat-value" id="s-spaces">0</div>
+      </div>
+    </div>
+
+    <div class="stat-card lines">
+      <div class="stat-icon">&#182;</div>
+      <div>
+        <div class="stat-label">Lines</div>
+        <div class="stat-value" id="s-lines">0</div>
+      </div>
+    </div>
+
+    <div class="reading-time" id="reading-time">Reading time: <span>—</span></div>
+
+    <!-- Readability gauge -->
+    <div class="gauge-card">
+      <div class="gauge-header">
+        <span class="gauge-title">Readability (Flesch)</span>
+        <span class="gauge-grade" id="gauge-grade">—</span>
+      </div>
+      <div class="gauge-track"><div class="gauge-fill" id="gauge-fill"></div></div>
+      <div class="gauge-score" id="gauge-score">Score: —</div>
+    </div>
+
+    <!-- Density -->
+    <div class="density-card">
+      <div class="density-title">Character breakdown</div>
+      <div class="bar-row">
+        <span class="bar-lbl">Letters</span>
+        <div class="bar-track"><div class="bar-fill letters" id="b-letters"></div></div>
+        <span class="bar-pct" id="p-letters">0%</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-lbl">Digits</span>
+        <div class="bar-track"><div class="bar-fill digits" id="b-digits"></div></div>
+        <span class="bar-pct" id="p-digits">0%</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-lbl">Spaces</span>
+        <div class="bar-track"><div class="bar-fill spaces" id="b-spaces"></div></div>
+        <span class="bar-pct" id="p-spaces">0%</span>
+      </div>
+    </div>
+
+    <!-- Top words -->
+    <div class="top-card">
+      <div class="top-title">Top words</div>
+      <div class="pill-list" id="top-words"><div class="empty">No text yet</div></div>
+    </div>
+  </div>
+</main>
+
+<!-- ── Export modal ── -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeExport()">&#10005;</button>
+    <h2>Export Report</h2>
+    <p>Copy the report below or download it as a .txt file.</p>
+    <pre class="export-pre" id="export-pre"></pre>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="downloadTXT()">Download .txt</button>
+      <button class="btn btn-primary" onclick="copyReport()">Copy to clipboard</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  WordCount &mdash; <a href="#">View on GitHub</a>
+</footer>
+
+<script>
+const SAMPLE = `The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.
+
+The fox was cunning and quick. It leaped gracefully over three hedges and two fences before vanishing into the woods. The dog, startled, barked twice and then sat quietly.
+
+Sentences end with punctuation marks. This one ends here. And this one too! Does a question count? Yes, it does. The fox was cunning and quick.`;
+
+// ── Analysis logic (mirrors C++ backend) ────────────────────────────────────
+const STOP = new Set(['the','a','an','and','or','but','in','on','at','to','for','of','is','it',
+  'this','that','was','he','she','they','we','i','you','be','with','as','by','are','were',
+  'has','had','have','from','not','do','did','if','so','its','his','her','our','their',
+  'my','your','can','will','would','could','should','been','into','over','then','than',
+  'too','also','just','one','two','three','more','no','yes','up','out','all','there','here']);
+
+function countWords(t){let c=0,w=false;for(const ch of t){if(/\s/.test(ch))w=false;else if(!w){w=true;c++}}return c}
+function countSentences(t){return(t.match(/[.!?]/g)||[]).length}
+function countSpaces(t){return(t.match(/[ \t]/g)||[]).length}
+function countLines(t){return t?(t.match(/\n/g)||[]).length:0}
+
+function syllables(word){
+  let w=word.toLowerCase();
+  if(w.length>1&&w.slice(-1)==='e')w=w.slice(0,-1);
+  const m=w.match(/[aeiouy]+/g);return Math.max(m?m.length:1,1);
+}
+function totalSyllables(t){
+  let s=0;
+  for(const tok of t.split(/\s+/)){
+    const w=tok.replace(/[^a-zA-Z]/g,'');
+    if(w)s+=syllables(w);
+  }
+  return s;
+}
+
+function fleschScore(t){
+  const w=countWords(t),s=countSentences(t),sy=totalSyllables(t);
+  if(!w||!s)return{score:0,grade:'N/A'};
+  const score=Math.min(100,Math.max(0,206.835-1.015*(w/s)-84.6*(sy/w)));
+  const grade=score>=90?'Very Easy':score>=80?'Easy':score>=70?'Fairly Easy':
+               score>=60?'Standard':score>=50?'Fairly Difficult':
+               score>=30?'Difficult':'Very Confusing';
+  return{score,grade};
+}
+
+function normSentence(s){
+  return s.toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+}
+function splitSentences(t){
+  const raw=t.split(/(?<=[.!?])\s+/);
+  return raw.map(s=>s.trim()).filter(s=>s.length>4);
+}
+function findDuplicates(t){
+  const sents=splitSentences(t);
+  const seen={},reported=new Set(),dups=[];
+  for(const s of sents){
+    const n=normSentence(s);
+    if(n.length<5)continue;
+    if(seen[n]&&!reported.has(n)){dups.push(s);reported.add(n);}
+    else seen[n]=true;
+  }
+  return dups;
+}
+
+function topWords(t,n=10){
+  const freq={};
+  for(const tok of t.toLowerCase().match(/\b[a-z']+\b/g)||[]){
+    if(tok.length<2||STOP.has(tok))continue;
+    freq[tok]=(freq[tok]||0)+1;
+  }
+  return Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,n);
+}
+
+function generateReport(t){
+  const dups=findDuplicates(t),rd=fleschScore(t),top=topWords(t,8);
+  const lines=[
+    '═══════════════════════════════════════',
+    '        WORDCOUNT ANALYSIS REPORT',
+    '═══════════════════════════════════════',
+    '',
+    '── Basic Stats ─────────────────────────',
+    `  Words:      ${countWords(t)}`,
+    `  Characters: ${t.length}`,
+    `  Sentences:  ${countSentences(t)}`,
+    `  Spaces:     ${countSpaces(t)}`,
+    `  Lines:      ${countLines(t)}`,
+    '',
+    '── Readability ─────────────────────────',
+    `  Flesch Score: ${Math.round(rd.score)} / 100`,
+    `  Grade:        ${rd.grade}`,
+    '',
+    '── Duplicate Sentences ─────────────────',
+  ];
+  if(!dups.length)lines.push('  No duplicate sentences found.');
+  else{lines.push(`  Found ${dups.length} duplicate(s):`);dups.forEach(d=>lines.push('  • '+d));}
+  lines.push('');
+  lines.push('── Top Words ───────────────────────────');
+  top.forEach(([w,c])=>lines.push(`  ${w} (${c}x)`));
+  lines.push('','═══════════════════════════════════════');
+  return lines.join('\n');
+}
+
+// ── UI helpers ───────────────────────────────────────────────────────────────
+const $ = id=>document.getElementById(id);
+
+function setVal(id,val){
+  const el=$('s-'+id)||$(id);
+  const s=String(val);
+  if(el.textContent!==s){
+    el.textContent=s;
+    el.classList.remove('pop');
+    void el.offsetWidth;
+    el.classList.add('pop');
+  }
+}
+function setBar(fillId,pctId,pct){
+  $(fillId).style.width=pct.toFixed(1)+'%';
+  $(pctId).textContent=pct.toFixed(0)+'%';
+}
+
+function analyze(){
+  const t=$('editor').value;
+  const words=countWords(t),chars=t.length,
+        sents=countSentences(t),sps=countSpaces(t),
+        lines=countLines(t);
+
+  setVal('words',words.toLocaleString());
+  setVal('chars',chars.toLocaleString());
+  setVal('sentences',sents.toLocaleString());
+  setVal('spaces',sps.toLocaleString());
+  setVal('lines',lines.toLocaleString());
+  $('char-ticker').textContent=chars.toLocaleString()+' chars';
+
+  // Reading time
+  const mins=words/238;
+  const rt=$('reading-time');
+  rt.innerHTML=words===0?'Reading time: <span>—</span>':
+    mins<1?'Reading time: <span>&lt; 1 min</span>':
+    `Reading time: <span>${Math.round(mins)} min${Math.round(mins)!==1?'s':''}</span>`;
+
+  // Readability
+  const rd=fleschScore(t);
+  $('gauge-fill').style.width=rd.score.toFixed(1)+'%';
+  $('gauge-grade').textContent=rd.grade;
+  $('gauge-score').textContent=`Score: ${Math.round(rd.score)} / 100`;
+
+  // Density
+  const lets=(t.match(/[a-zA-Z]/g)||[]).length;
+  const digs=(t.match(/[0-9]/g)||[]).length;
+  const total=chars||1;
+  setBar('b-letters','p-letters',lets/total*100);
+  setBar('b-digits','p-digits',digs/total*100);
+  setBar('b-spaces','p-spaces',sps/total*100);
+
+  // Top words
+  const tw=topWords(t);
+  $('top-words').innerHTML=tw.length
+    ?tw.map(([w,c])=>`<span class="pill">${w}<span class="pill-n">×${c}</span></span>`).join('')
+    :'<div class="empty">No meaningful words yet</div>';
+
+  // Duplicates
+  const dups=findDuplicates(t);
+  const badge=$('dup-badge');
+  const list=$('dup-list');
+  if(!dups.length){
+    badge.className='dup-badge none';badge.textContent='No duplicates';
+    list.innerHTML='<div class="empty">No duplicate sentences found</div>';
+  } else {
+    badge.className='dup-badge has';badge.textContent=`${dups.length} duplicate${dups.length>1?'s':''}`;
+    list.innerHTML=dups.map(d=>`<div class="dup-item">${escapeHTML(d)}</div>`).join('');
+  }
+}
+
+function escapeHTML(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+// ── Feature: File upload ─────────────────────────────────────────────────────
+$('file-input').addEventListener('change',e=>{
+  const file=e.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    $('editor').value=ev.target.result;
+    $('upload-filename').textContent=file.name;
+    $('upload-filename').style.display='block';
+    analyze();
+  };
+  reader.readAsText(file);
+});
+
+// Drag & drop
+const dz=$('drop-zone');
+document.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag')});
+document.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+document.addEventListener('drop',e=>{
+  e.preventDefault();dz.classList.remove('drag');
+  const file=e.dataTransfer.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    $('editor').value=ev.target.result;
+    $('upload-filename').textContent=file.name;
+    $('upload-filename').style.display='block';
+    analyze();
+  };
+  reader.readAsText(file);
+});
+
+// ── Feature: Export ──────────────────────────────────────────────────────────
+function openExport(){
+  const report=generateReport($('editor').value);
+  $('export-pre').textContent=report;
+  $('modal').classList.add('open');
+}
+function closeExport(){$('modal').classList.remove('open')}
+
+function downloadTXT(){
+  const text=$('export-pre').textContent;
+  const a=document.createElement('a');
+  a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(text);
+  a.download='wordcount-report.txt';a.click();
+}
+function copyReport(){
+  navigator.clipboard.writeText($('export-pre').textContent).then(()=>{
+    const btn=document.querySelector('.modal-actions .btn-primary');
+    btn.textContent='Copied!';
+    setTimeout(()=>btn.textContent='Copy to clipboard',1600);
+  });
+}
+$('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeExport()});
+
+// ── Feature: Dark mode ───────────────────────────────────────────────────────
+const toggle=$('dark-toggle');
+const saved=localStorage.getItem('wc-theme');
+if(saved==='dark'){document.documentElement.setAttribute('data-theme','dark');toggle.classList.add('on')}
+
+toggle.addEventListener('click',()=>{
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',isDark?'light':'dark');
+  toggle.classList.toggle('on',!isDark);
+  localStorage.setItem('wc-theme',isDark?'light':'dark');
+});
+
+// ── Misc ─────────────────────────────────────────────────────────────────────
+function loadSample(){$('editor').value=SAMPLE;analyze()}
+function clearAll(){
+  $('editor').value='';
+  $('upload-filename').style.display='none';
+  $('file-input').value='';
+  analyze();
+  $('editor').focus();
+}
+
+$('editor').addEventListener('input',analyze);
+analyze();
+</script>
+</body>
+</html>
