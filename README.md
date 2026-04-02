@@ -61,14 +61,6 @@ Word-Count-Project/
 
 ---
 
-## 🚀 Future Improvements
-
-* Backend API integration
-* Cloud-based text processing
-* AI-based text suggestions
-
----
-
 ## 👨‍💻 Author
 
 **Aditya Prakash**
