@@ -6,7 +6,7 @@ A modern **real-time text analysis web app** that provides deep insights into te
 
 ## 🌐 Live Demo
 
-🚀 **Live Website:** *(Add your Render link here after deployment)*
+🚀 **Live Website:** *https://wordcount-trel.onrender.com*
 
 ---
 
