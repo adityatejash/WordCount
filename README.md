@@ -1,83 +1,80 @@
-# WordCount — Text Analyzer
+# 🧠 WordCount — Advanced Text Analyzer
 
-A full-stack text analysis tool with a C++ HTTP backend and a pure HTML/CSS/JS frontend.
+A modern **real-time text analysis web app** that provides deep insights into text, including readability, duplicates, and word statistics.
 
-## Features
+---
 
-| Feature | Details |
-|---|---|
-| **Basic stats** | Words, characters, sentences, spaces, lines |
-| **File upload** | Drag & drop or click — `.txt`, `.md`, `.csv` and more |
-| **Dark mode** | Toggle persists via localStorage |
-| **Export report** | Download `.txt` or copy to clipboard |
-| **Duplicate detector** | Finds repeated sentences, highlights them in red |
-| **Readability score** | Flesch Reading Ease (0–100) with grade label |
-| **Top words** | Frequency analysis excluding stopwords |
-| **Reading time** | Estimated at 238 wpm |
+## 🌐 Live Demo
 
-## Project structure
+🚀 **Live Website:** *(Add your Render link here after deployment)*
+
+---
+
+## ✨ Features
+
+* 📊 Word, Character, Sentence, Line Count
+* 🔁 Duplicate Sentence Detection
+* 📖 Readability Score (Flesch Reading Ease)
+* 📈 Top Word Frequency Analysis
+* ⏱ Reading Time Estimation
+* 📂 File Upload Support
+* 🌙 Dark Mode UI
+* 📥 Export Report as TXT
+
+---
+
+## 🖥️ Tech Stack
+
+* **Frontend:** HTML, CSS, JavaScript
+* **Backend Logic (optional):** C++
+* **Deployment:** Render (Static Hosting)
+
+---
+
+## ⚙️ How to Use
+
+1. Open the live website
+2. Paste or type your text
+3. View real-time analysis
+4. Upload files or export report
+
+---
+
+## 📁 Project Structure
 
 ```
-├── WordCount.cpp    # C++ backend — HTTP server + all analysis logic
-├── index.html       # Frontend — served by the C++ server
-├── render.yaml      # Render deployment config
+Word-Count-Project/
+│
+├── index.html        # Frontend UI
+├── WordCount.cpp     # Backend logic (reference)
 └── README.md
 ```
 
-## Deploy to Render
+---
 
-1. Push this repo to GitHub
-2. Go to [render.com](https://render.com) → New → Web Service
-3. Connect your GitHub repo
-4. Render auto-detects `render.yaml` and uses:
-   - **Build:** `g++ -std=c++17 -O2 -o wordcount WordCount.cpp`
-   - **Start:** `./wordcount`
-5. Done — your app is live!
+## 💡 Highlights
 
-## Run locally
+* Clean and responsive UI
+* Real-time updates
+* No external libraries used
+* Fully client-side processing
 
-```bash
-g++ -std=c++17 -O2 -o wordcount WordCount.cpp
-./wordcount
-# Open http://localhost:8080
-```
+---
 
-## API
+## 🚀 Future Improvements
 
-The C++ server exposes two endpoints:
+* Backend API integration
+* Cloud-based text processing
+* AI-based text suggestions
 
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/` | Serves `index.html` |
-| `POST` | `/analyze` | Accepts plain text body, returns JSON analysis |
+---
 
-### Example API call
+## 👨‍💻 Author
 
-```bash
-curl -X POST http://localhost:8080/analyze \
-  -H "Content-Type: text/plain" \
-  -d "Hello world. Hello world. This is a test sentence."
-```
+**Aditya Prakash**
 
-### Response shape
+---
 
-```json
-{
-  "words": 10,
-  "characters": 51,
-  "sentences": 3,
-  "spaces": 9,
-  "lines": 0,
-  "readability": { "score": 83, "grade": "Easy" },
-  "duplicates": {
-    "count": 1,
-    "unique": 2,
-    "sentences": ["Hello world."]
-  },
-  "topWords": [
-    { "word": "hello", "count": 2 },
-    { "word": "world", "count": 2 }
-  ],
-  "report": "═══ ... report text ..."
-}
-```
+## ⭐ Support
+
+If you like this project, consider giving it a ⭐ on GitHub!
